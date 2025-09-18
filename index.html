@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geography Quest - Country Game</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Start Screen -->
+        <div id="startScreen" class="screen active">
+            <div class="content">
+                <div class="header-section">
+                    <div class="globe-icon">🌍</div>
+                    <h1>Geography Quest</h1>
+                    <p>Explore the world through flags and populations!</p>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-icon">🏳️</div>
+                        <span class="stat-value">195</span>
+                        <span class="stat-label">Countries</span>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-icon">🎯</div>
+                        <span class="stat-value">2</span>
+                        <span class="stat-label">Game Modes</span>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-icon">🌐</div>
+                        <span class="stat-value">∞</span>
+                        <span class="stat-label">Questions</span>
+                    </div>
+                </div>
+                
+                <div class="game-selection">
+                    <div id="flagGameBtn" class="game-btn">
+                        <div class="game-icon">🏳️</div>
+                        <div class="game-title">Flag Challenge</div>
+                        <div class="game-desc">Identify countries by their flags</div>
+                        <div class="game-features">
+                            <span class="feature">Multiple Choice</span>
+                            <span class="feature">Type Answer</span>
+                        </div>
+                    </div>
+                    <div id="populationGameBtn" class="game-btn">
+                        <div class="game-icon">👥</div>
+                        <div class="game-title">Population Battle</div>
+                        <div class="game-desc">Compare countries by population</div>
+                        <div class="game-features">
+                            <span class="feature">Higher or Lower</span>
+                            <span class="feature">Real Data</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flag Game Screen -->
+        <div id="gameScreen" class="screen">
+            <div class="game-header">
+                <div class="score">
+                    <span class="score-icon">🏆</span>
+                    Score: <span id="score">0</span>
+                </div>
+                <div class="game-mode-toggle">
+                    <span class="toggle-label">Multiple Choice</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="gameModeToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="toggle-label">Type Answer</span>
+                </div>
+                <div class="timer">
+                    <span class="timer-icon">⏱️</span>
+                    <span id="timeLeft">15</span>
+                    <div class="timer-bar">
+                        <div class="timer-progress"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="game-content">
+                <div class="flag-container">
+                    <div class="flag-frame">
+                        <img id="flagImage" class="flag-image" src="" alt="Country Flag">
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <h2>What country does this flag belong to?</h2>
+                </div>
+                
+                <div id="multipleChoiceOptions" class="options">
+                    <!-- Options will be generated dynamically -->
+                </div>
+                
+                <div id="typingInput" class="typing-input" style="display: none;">
+                    <div class="input-container">
+                        <input type="text" id="countryInput" class="country-input" placeholder="Type the country name...">
+                        <div id="autocompleteSuggestions" class="autocomplete-suggestions"></div>
+                    </div>
+                    <button id="submitAnswer" class="btn btn-primary">Submit</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Population Game Screen -->
+        <div id="populationGameScreen" class="screen">
+            <div class="game-header">
+                <div class="score">
+                    <span class="score-icon">🏆</span>
+                    Score: <span id="populationScore">0</span>
+                </div>
+                <div class="game-title">Population Battle</div>
+                <div class="timer">
+                    <span class="timer-icon">⏱️</span>
+                    <span>∞</span>
+                </div>
+            </div>
+            
+            <div class="population-game-content">
+                <div class="countries-container">
+                    <div class="left-country">
+                        <div class="country-card">
+                            <div class="flag-frame-small">
+                                <img id="leftFlag" class="country-flag" src="" alt="Left Country Flag">
+                            </div>
+                            <div id="leftCountryName" class="country-name"></div>
+                            <div id="leftPopulation" class="population"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="vs-divider">
+                        <span class="vs-text">VS</span>
+                        <div class="vs-icon">⚔️</div>
+                    </div>
+                    
+                    <div class="right-country">
+                        <div class="country-card">
+                            <div class="flag-frame-small">
+                                <img id="rightFlag" class="country-flag" src="" alt="Right Country Flag">
+                            </div>
+                            <div id="rightCountryName" class="country-name"></div>
+                            <div class="population unknown">?</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="population-game-bottom">
+                    <div class="question">
+                        <h2 id="populationQuestion">Does this country have higher or lower population?</h2>
+                    </div>
+                    
+                    <div class="population-options">
+                        <button id="higherBtn" class="btn btn-primary">
+                            <span class="btn-icon">📈</span>
+                            Higher
+                        </button>
+                        <button id="lowerBtn" class="btn btn-secondary">
+                            <span class="btn-icon">📉</span>
+                            Lower
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
