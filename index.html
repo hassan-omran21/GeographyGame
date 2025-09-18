@@ -118,7 +118,10 @@
                 <div class="game-title">Population Battle</div>
                 <div class="timer">
                     <span class="timer-icon">⏱️</span>
-                    <span>∞</span>
+                    <span id="populationTimeLeft">10</span>
+                    <div class="timer-bar">
+                        <div class="timer-progress"></div>
+                    </div>
                 </div>
             </div>
             
@@ -126,24 +129,17 @@
                 <div class="countries-container">
                     <div class="left-country">
                         <div class="country-card">
-                            <div class="flag-frame-small">
-                                <img id="leftFlag" class="country-flag" src="" alt="Left Country Flag">
-                            </div>
+                            <img id="leftFlag" class="country-flag" src="" alt="Left Country Flag">
                             <div id="leftCountryName" class="country-name"></div>
                             <div id="leftPopulation" class="population"></div>
                         </div>
                     </div>
                     
-                    <div class="vs-divider">
-                        <span class="vs-text">VS</span>
-                        <div class="vs-icon">⚔️</div>
-                    </div>
+                    <div class="vs-divider">VS</div>
                     
                     <div class="right-country">
                         <div class="country-card">
-                            <div class="flag-frame-small">
-                                <img id="rightFlag" class="country-flag" src="" alt="Right Country Flag">
-                            </div>
+                            <img id="rightFlag" class="country-flag" src="" alt="Right Country Flag">
                             <div id="rightCountryName" class="country-name"></div>
                             <div class="population unknown">?</div>
                         </div>
@@ -156,14 +152,8 @@
                     </div>
                     
                     <div class="population-options">
-                        <button id="higherBtn" class="btn btn-primary">
-                            <span class="btn-icon">📈</span>
-                            Higher
-                        </button>
-                        <button id="lowerBtn" class="btn btn-secondary">
-                            <span class="btn-icon">📉</span>
-                            Lower
-                        </button>
+                        <button id="higherBtn" class="btn btn-primary">Higher</button>
+                        <button id="lowerBtn" class="btn btn-secondary">Lower</button>
                     </div>
                 </div>
             </div>

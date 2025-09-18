@@ -19,6 +19,8 @@ class CountryFlagGame {
         this.currentLeftCountry = null;
         this.currentRightCountry = null;
         this.populationScore = 0;
+        this.populationTimeLeft = 10;
+        this.populationTimerInterval = null;
         this.currentGame = null;
         
         this.initializeElements();
@@ -50,6 +52,8 @@ class CountryFlagGame {
         // Population game elements
         this.populationGameScreen = document.getElementById('populationGameScreen');
         this.populationScoreElement = document.getElementById('populationScore');
+        this.populationTimeLeftElement = document.getElementById('populationTimeLeft');
+        this.populationTimerBar = document.querySelector('#populationGameScreen .timer-progress');
         this.leftFlag = document.getElementById('leftFlag');
         this.rightFlag = document.getElementById('rightFlag');
         this.leftCountryName = document.getElementById('leftCountryName');
@@ -120,6 +124,8 @@ class CountryFlagGame {
                 this.isTypingMode = this.gameModeToggle.checked;
                 this.showGameModeNotification();
                 this.timerLocked = true;
+                
+                // Don't update display immediately - wait for next round
             });
         }
 
@@ -506,6 +512,7 @@ class CountryFlagGame {
         
         this.updatePopulationScore();
         this.showPopulationGameScreen();
+        this.startPopulationTimer();
         this.nextPopulationQuestion();
     }
 
@@ -532,6 +539,12 @@ class CountryFlagGame {
                 overlay.parentNode.removeChild(overlay);
             }
         });
+        
+        // Remove back to menu button if it exists
+        const backButton = document.getElementById('backToMenuBtn');
+        if (backButton) {
+            backButton.remove();
+        }
     }
 
     showGameOverScreen() {
@@ -611,10 +624,11 @@ class CountryFlagGame {
             option.classList.remove('correct', 'incorrect');
         });
 
-        // Update game mode if needed
-        if (!this.timerLocked) {
-            this.updateGameMode();
-        }
+        // Reset timer lock for new question (allows mode changes to take effect)
+        this.timerLocked = false;
+        
+        // Update game mode display
+        this.updateGameMode();
 
         // Select random country
         const randomIndex = Math.floor(Math.random() * this.availableCountries.length);
@@ -654,6 +668,8 @@ class CountryFlagGame {
         this.timeLeft = this.isTypingMode ? 20 : 15;
         this.currentMaxTime = this.timeLeft;
         this.timerLocked = false;
+        
+        // Update timer display immediately
         this.updateTimer();
 
         this.timerInterval = setInterval(() => {
@@ -671,7 +687,7 @@ class CountryFlagGame {
             this.timeLeftElement.textContent = this.timeLeft;
         }
 
-        if (this.timerBar && !this.timerLocked) {
+        if (this.timerBar) {
             const progress = (this.timeLeft / this.currentMaxTime) * 100;
             this.timerBar.style.width = progress + '%';
             
@@ -773,9 +789,16 @@ class CountryFlagGame {
     handleTypingAnswer() {
         if (!this.isGameActive) return;
 
-        const userAnswer = this.countryInput.value.trim().toLowerCase();
+        const userAnswer = this.countryInput.value.trim();
+        
+        // If user submitted empty string, just ignore it
+        if (userAnswer === '') {
+            return;
+        }
+
+        const userAnswerLower = userAnswer.toLowerCase();
         const correctAnswer = this.currentCountry.name.toLowerCase();
-        const isCorrect = userAnswer === correctAnswer;
+        const isCorrect = userAnswerLower === correctAnswer;
 
         if (isCorrect) {
             this.countryInput.classList.add('correct');
@@ -873,16 +896,85 @@ class CountryFlagGame {
             questionElement.innerHTML = `❌ Wrong! The correct answer was: <strong>${this.currentCountry.name}</strong>`;
             questionElement.style.color = '#dc3545';
         }
+        
+        // Add a back to menu button
+        this.showBackToMenuButton();
+    }
+
+    showBackToMenuButton() {
+        // Remove any existing back button
+        const existingButton = document.getElementById('backToMenuBtn');
+        if (existingButton) {
+            existingButton.remove();
+        }
+
+        // Create back to menu button
+        const backButton = document.createElement('button');
+        backButton.id = 'backToMenuBtn';
+        backButton.className = 'btn btn-secondary back-to-menu-btn';
+        backButton.innerHTML = '🏠 Back to Main Menu';
+        backButton.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 12px 20px;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(139, 69, 19, 0.2);
+            color: #4a5568;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(8px);
+            transition: all 0.2s ease;
+        `;
+
+        // Add hover effect
+        backButton.addEventListener('mouseenter', () => {
+            backButton.style.transform = 'translateY(-1px)';
+            backButton.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+        });
+
+        backButton.addEventListener('mouseleave', () => {
+            backButton.style.transform = 'translateY(0)';
+            backButton.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+        });
+
+        // Add click handler
+        backButton.addEventListener('click', () => {
+            this.showStartScreen();
+            backButton.remove();
+        });
+
+        document.body.appendChild(backButton);
     }
 
     updateGameMode() {
-        if (this.isTypingMode) {
-            this.multipleChoiceOptions.style.display = 'none';
-            this.typingInput.style.display = 'flex';
-            this.countryInput.focus();
-        } else {
-            this.multipleChoiceOptions.style.display = 'grid';
-            this.typingInput.style.display = 'none';
+        // Only update display if timer is not locked (i.e., on next round)
+        if (!this.timerLocked) {
+            if (this.isTypingMode) {
+                this.multipleChoiceOptions.style.display = 'none';
+                this.typingInput.style.display = 'flex';
+                this.countryInput.focus();
+                
+                // Clear any existing options when switching to typing mode
+                this.multipleChoiceOptions.innerHTML = '';
+            } else {
+                this.multipleChoiceOptions.style.display = 'grid';
+                this.typingInput.style.display = 'none';
+                
+                // Clear input field when switching to multiple choice
+                if (this.countryInput) {
+                    this.countryInput.value = '';
+                    this.countryInput.classList.remove('correct', 'incorrect');
+                }
+                
+                // Regenerate options for current country if game is active
+                if (this.isGameActive && this.currentCountry) {
+                    this.generateOptions();
+                }
+            }
         }
         
         this.updateTimer();
@@ -1074,6 +1166,8 @@ class CountryFlagGame {
             this.showPopulationResult(true);
             this.slideCountries();
         } else {
+            // Stop timer on wrong answer
+            clearInterval(this.populationTimerInterval);
             this.showPopulationResult(false);
         }
     }
@@ -1196,6 +1290,49 @@ class CountryFlagGame {
         }
     }
 
+    startPopulationTimer() {
+        if (this.populationTimerInterval) {
+            clearInterval(this.populationTimerInterval);
+        }
+
+        this.populationTimeLeft = 10;
+        this.updatePopulationTimer();
+
+        this.populationTimerInterval = setInterval(() => {
+            this.populationTimeLeft--;
+            this.updatePopulationTimer();
+
+            if (this.populationTimeLeft <= 0) {
+                this.handlePopulationTimeout();
+            }
+        }, 1000);
+    }
+
+    updatePopulationTimer() {
+        if (this.populationTimeLeftElement) {
+            this.populationTimeLeftElement.textContent = this.populationTimeLeft;
+        }
+
+        if (this.populationTimerBar) {
+            const progress = (this.populationTimeLeft / 10) * 100;
+            this.populationTimerBar.style.width = progress + '%';
+            
+            if (this.populationTimeLeft <= 3) {
+                this.populationTimerBar.style.backgroundColor = '#dc3545';
+            } else if (this.populationTimeLeft <= 6) {
+                this.populationTimerBar.style.backgroundColor = '#ffc107';
+            } else {
+                this.populationTimerBar.style.backgroundColor = '#28a745';
+            }
+        }
+    }
+
+    handlePopulationTimeout() {
+        clearInterval(this.populationTimerInterval);
+        this.isGameActive = false;
+        this.showPopulationGameOverScreen();
+    }
+
     showPopulationGameOverScreen() {
         // Create overlay for population game over
         const overlay = document.createElement('div');
@@ -1248,6 +1385,9 @@ class CountryFlagGame {
             questionElement.innerHTML = `❌ Wrong! ${leftCountryName} has ${leftPopulation} and ${rightCountryName} has ${rightPopulation}`;
             questionElement.style.color = '#e53e3e';
         }
+        
+        // Add a back to menu button
+        this.showBackToMenuButton();
     }
 }
 
