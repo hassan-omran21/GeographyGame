@@ -277,6 +277,33 @@ p {
     pointer-events: none;
 }
 
+/* Back to Main Menu Button */
+.back-to-menu-btn {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(139, 69, 19, 0.15);
+    border-radius: 12px;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #2d3748;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(8px);
+}
+
+.back-to-menu-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(139, 69, 19, 0.25);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.back-to-menu-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 .score {
     font-size: 1.25rem;
     font-weight: 600;
@@ -937,8 +964,8 @@ input:checked + .toggle-slider:before {
 
 .population.unknown {
     color: #a0aec0;
-    font-size: 2.25rem;
-    font-weight: 700;
+    font-size: 1.5rem;
+    font-weight: 600;
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;

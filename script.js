@@ -19,8 +19,8 @@ class CountryFlagGame {
         this.currentLeftCountry = null;
         this.currentRightCountry = null;
         this.populationScore = 0;
-        this.populationTimeLeft = 10;
         this.populationTimerInterval = null;
+        this.lastPopulationClick = 0; // Track last click time for cooldown
         this.currentGame = null;
         
         this.initializeElements();
@@ -52,8 +52,6 @@ class CountryFlagGame {
         // Population game elements
         this.populationGameScreen = document.getElementById('populationGameScreen');
         this.populationScoreElement = document.getElementById('populationScore');
-        this.populationTimeLeftElement = document.getElementById('populationTimeLeft');
-        this.populationTimerBar = document.querySelector('#populationGameScreen .timer-progress');
         this.leftFlag = document.getElementById('leftFlag');
         this.rightFlag = document.getElementById('rightFlag');
         this.leftCountryName = document.getElementById('leftCountryName');
@@ -61,6 +59,8 @@ class CountryFlagGame {
         this.leftPopulation = document.getElementById('leftPopulation');
         this.higherBtn = document.getElementById('higherBtn');
         this.lowerBtn = document.getElementById('lowerBtn');
+        this.backToMainMenuBtn = document.getElementById('backToMainMenu');
+        this.populationBackToMainMenuBtn = document.getElementById('populationBackToMainMenu');
     }
 
     bindEvents() {
@@ -139,6 +139,19 @@ class CountryFlagGame {
         if (this.lowerBtn) {
             this.lowerBtn.addEventListener('click', () => {
                 this.handlePopulationGuess('lower');
+            });
+        }
+
+        // Back to main menu buttons
+        if (this.backToMainMenuBtn) {
+            this.backToMainMenuBtn.addEventListener('click', () => {
+                this.showStartScreen();
+            });
+        }
+
+        if (this.populationBackToMainMenuBtn) {
+            this.populationBackToMainMenuBtn.addEventListener('click', () => {
+                this.showStartScreen();
             });
         }
     }
@@ -250,7 +263,6 @@ class CountryFlagGame {
             { name: 'Ireland', flag: 'https://flagcdn.com/w320/ie.png' },
             { name: 'New Zealand', flag: 'https://flagcdn.com/w320/nz.png' },
             { name: 'Singapore', flag: 'https://flagcdn.com/w320/sg.png' },
-            { name: 'Israel', flag: 'https://flagcdn.com/w320/il.png' }
         ];
 
         this.countries = fallbackCountries.filter(country => country.name !== 'Israel');
@@ -370,7 +382,7 @@ class CountryFlagGame {
             'China': 'cn', 'India': 'in', 'United States': 'us', 'Indonesia': 'id',
             'Pakistan': 'pk', 'Brazil': 'br', 'Nigeria': 'ng', 'Bangladesh': 'bd',
             'Russia': 'ru', 'Mexico': 'mx', 'Japan': 'jp', 'Ethiopia': 'et',
-            'Philippines': 'ph', 'Egypt': 'eg', 'Vietnam': 'vn', 'DR Congo': 'cd',
+            'Philippines': 'ph', 'Egypt': 'eg', 'Vietnam': 'vn', 'DR Congo': 'cd', 'Republic of Congo': 'cg', 'Congo': 'cg', 'Congo, Republic of the': 'cg',
             'Turkey': 'tr', 'Iran': 'ir', 'Germany': 'de', 'Thailand': 'th',
             'United Kingdom': 'gb', 'France': 'fr', 'Italy': 'it', 'Tanzania': 'tz',
             'South Africa': 'za', 'Myanmar': 'mm', 'Kenya': 'ke', 'South Korea': 'kr',
@@ -432,7 +444,23 @@ class CountryFlagGame {
             'Niue': 'nu', 'Tokelau': 'tk', 'Vatican City': 'va'
         };
         
-        return codeMap[countryName] || 'un'; // Default to UN flag if not found
+        const code = codeMap[countryName] || 'un'; // Default to UN flag if not found
+        
+        // Special handling for Congo countries
+        if (countryName.toLowerCase().includes('congo')) {
+            if (countryName.toLowerCase().includes('democratic') || countryName.toLowerCase().includes('dr')) {
+                return 'cd'; // Democratic Republic of Congo
+            } else {
+                return 'cg'; // Republic of Congo
+            }
+        }
+        
+        // Debug logging for Republic of Congo
+        if (countryName.toLowerCase().includes('congo')) {
+            console.log('Congo country found:', countryName, '-> code:', code);
+        }
+        
+        return code;
     }
 
     showFlagGamePopup() {
@@ -495,6 +523,14 @@ class CountryFlagGame {
     }
 
     startGame() {
+        // Clear any existing overlays
+        const overlays = document.querySelectorAll('.game-over-overlay, .population-game-over-overlay');
+        overlays.forEach(overlay => {
+            if (overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+        });
+        
         this.score = 0;
         this.usedCountries.clear();
         this.isGameActive = true;
@@ -506,13 +542,27 @@ class CountryFlagGame {
     }
 
     startPopulationGameInternal() {
+        // Clear any existing overlays
+        const overlays = document.querySelectorAll('.game-over-overlay, .population-game-over-overlay');
+        overlays.forEach(overlay => {
+            if (overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+        });
+        
         this.populationScore = 0;
         this.usedPopulationCountries.clear();
         this.isGameActive = true;
         
         this.updatePopulationScore();
         this.showPopulationGameScreen();
-        this.startPopulationTimer();
+        
+        // Reset question text color to black
+        const questionElement = document.getElementById('populationQuestion');
+        if (questionElement) {
+            questionElement.style.color = '#2d3748';
+        }
+        
         this.nextPopulationQuestion();
     }
 
@@ -545,9 +595,18 @@ class CountryFlagGame {
         if (backButton) {
             backButton.remove();
         }
+        
+        // Reset current game
+        this.currentGame = null;
     }
 
     showGameOverScreen() {
+        // Remove any existing game over overlay
+        const existingOverlay = document.querySelector('.game-over-overlay');
+        if (existingOverlay) {
+            document.body.removeChild(existingOverlay);
+        }
+        
         const overlay = document.createElement('div');
         overlay.className = 'game-over-overlay';
         overlay.innerHTML = `
@@ -569,7 +628,8 @@ class CountryFlagGame {
         // Add close button functionality
         document.getElementById('gameOverClose').addEventListener('click', () => {
             document.body.removeChild(overlay);
-            // Show the correct answer if it was hidden
+            // Reset game state and show correct answer
+            this.isGameActive = false;
             this.showCorrectAnswerAfterGameOver();
         });
         
@@ -1107,6 +1167,7 @@ class CountryFlagGame {
         const questionElement = document.getElementById('populationQuestion');
         if (questionElement) {
             questionElement.textContent = `Does ${this.currentRightCountry.name} have higher or lower population than ${this.currentLeftCountry.name}?`;
+            questionElement.style.color = '#2d3748'; // Reset to black color
         }
         
         // Add error handling for population game flags
@@ -1149,6 +1210,13 @@ class CountryFlagGame {
     handlePopulationGuess(guess) {
         if (!this.isGameActive) return;
 
+        // Check cooldown (1000ms = 1 second)
+        const now = Date.now();
+        if (now - this.lastPopulationClick < 1000) {
+            return; // Ignore click if too soon
+        }
+        this.lastPopulationClick = now;
+
         const leftPopulation = this.currentLeftCountry.population;
         const rightPopulation = this.currentRightCountry.population;
         
@@ -1165,9 +1233,9 @@ class CountryFlagGame {
             this.updatePopulationScore();
             this.showPopulationResult(true);
             this.slideCountries();
+            // No timer - just continue with sliding
         } else {
-            // Stop timer on wrong answer
-            clearInterval(this.populationTimerInterval);
+            // Wrong answer - show result
             this.showPopulationResult(false);
         }
     }
@@ -1184,9 +1252,7 @@ class CountryFlagGame {
                 questionElement.style.color = '#28a745';
                 
                 // The question text will be updated in slideCountries() after animation
-                setTimeout(() => {
-                    questionElement.style.color = '#333';
-                }, 2000);
+                // No need to set color here - slideCountries() handles it
             }
         } else {
             // Show population popup for the guessed country
@@ -1202,6 +1268,11 @@ class CountryFlagGame {
                 
                 questionElement.innerHTML = `❌ Wrong! ${leftCountryName} has ${leftPopulation} and ${rightCountryName} has ${rightPopulation}`;
                 questionElement.style.color = '#e53e3e';
+                
+                // Reset color to black before showing game over
+                setTimeout(() => {
+                    questionElement.style.color = '#2d3748';
+                }, 1500);
                 
                 // Show game over after 2 seconds (same timing as flag game)
                 setTimeout(() => {
@@ -1276,7 +1347,7 @@ class CountryFlagGame {
             const questionElement = document.getElementById('populationQuestion');
             if (questionElement) {
                 questionElement.textContent = `Does ${this.currentRightCountry.name} have higher or lower population than ${this.currentLeftCountry.name}?`;
-                questionElement.style.color = '#333'; // Ensure color is reset
+                questionElement.style.color = '#2d3748'; // Use the same color as CSS
             }
 
             // Remove animation classes
@@ -1290,50 +1361,13 @@ class CountryFlagGame {
         }
     }
 
-    startPopulationTimer() {
-        if (this.populationTimerInterval) {
-            clearInterval(this.populationTimerInterval);
-        }
-
-        this.populationTimeLeft = 10;
-        this.updatePopulationTimer();
-
-        this.populationTimerInterval = setInterval(() => {
-            this.populationTimeLeft--;
-            this.updatePopulationTimer();
-
-            if (this.populationTimeLeft <= 0) {
-                this.handlePopulationTimeout();
-            }
-        }, 1000);
-    }
-
-    updatePopulationTimer() {
-        if (this.populationTimeLeftElement) {
-            this.populationTimeLeftElement.textContent = this.populationTimeLeft;
-        }
-
-        if (this.populationTimerBar) {
-            const progress = (this.populationTimeLeft / 10) * 100;
-            this.populationTimerBar.style.width = progress + '%';
-            
-            if (this.populationTimeLeft <= 3) {
-                this.populationTimerBar.style.backgroundColor = '#dc3545';
-            } else if (this.populationTimeLeft <= 6) {
-                this.populationTimerBar.style.backgroundColor = '#ffc107';
-            } else {
-                this.populationTimerBar.style.backgroundColor = '#28a745';
-            }
-        }
-    }
-
-    handlePopulationTimeout() {
-        clearInterval(this.populationTimerInterval);
-        this.isGameActive = false;
-        this.showPopulationGameOverScreen();
-    }
-
     showPopulationGameOverScreen() {
+        // Remove any existing population game over overlay
+        const existingOverlay = document.querySelector('.population-game-over-overlay');
+        if (existingOverlay) {
+            document.body.removeChild(existingOverlay);
+        }
+        
         // Create overlay for population game over
         const overlay = document.createElement('div');
         overlay.className = 'population-game-over-overlay';
@@ -1356,7 +1390,8 @@ class CountryFlagGame {
         // Add close button functionality
         document.getElementById('populationGameOverClose').addEventListener('click', () => {
             document.body.removeChild(overlay);
-            // Show the correct answer if it was hidden
+            // Reset game state and show correct answer
+            this.isGameActive = false;
             this.showPopulationCorrectAnswerAfterGameOver();
         });
         
